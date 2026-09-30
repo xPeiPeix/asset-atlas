@@ -1,0 +1,8 @@
+.git/
+.vercel/
+.env*
+node_modules/
+.playwright-cli/
+artifacts/
+asset-atlas.html
+dist/

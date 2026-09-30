@@ -12,6 +12,8 @@
 
 仓库：https://github.com/xPeiPeix/asset-atlas
 
+在线体验：https://asset-atlas-nu.vercel.app
+
 离线演示：https://github.com/xPeiPeix/asset-atlas/releases/latest/download/asset-atlas.html
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FxPeiPeix%2Fasset-atlas&project-name=asset-atlas&repository-name=asset-atlas)

@@ -13,6 +13,7 @@ Asset Atlas 用 **一资产一张 Markdown 卡片** 保存这些信息，再生�
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FxPeiPeix%2Fasset-atlas&project-name=asset-atlas&repository-name=asset-atlas)
 
 - **一键部署**：点击上方按钮，在自己的 Vercel 账号中创建项目并复制仓库；不需要数据库、API Key 或环境变量。
+- [在线体验示例地图](https://asset-atlas-nu.vercel.app)：无需下载或登录。
 - [下载离线演示 HTML](https://github.com/xPeiPeix/asset-atlas/releases/latest/download/asset-atlas.html)：保存后用浏览器打开，无需安装。
 - [查看配套 skill](skills/manage-asset-atlas/SKILL.md)：不用这个页面，也可以借鉴卡片维护方式。
 - 仓库自带 6 张活动卡片和 1 张归档卡片，均为演示资料。示例域名、路径和主机不代表真实服务。
