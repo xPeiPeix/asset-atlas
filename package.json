@@ -1,6 +1,6 @@
 {
   "name": "asset-atlas",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "A Markdown-first map of your tools, services, and projects.",
   "type": "module",
