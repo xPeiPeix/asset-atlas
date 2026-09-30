@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.vercel/
+asset-atlas.html
+.DS_Store
+.env
+.env.*
+!.env.example
+artifacts/
+.playwright-cli/
+*.tmp

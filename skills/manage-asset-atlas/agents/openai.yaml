@@ -1,0 +1,4 @@
+interface:
+  display_name: "资产地图"
+  short_description: "用一资产一卡的方式查询和维护个人工具、网站与后台任务，并同步可视化地图"
+  default_prompt: "请使用 $manage-asset-atlas，检查当前资产地图并把我指定的项目登记到现有索引。"

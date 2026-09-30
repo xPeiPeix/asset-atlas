@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN" data-palette="aurum">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="用 Markdown 维护个人工具、服务与网站资产，离线搜索、筛选和查看架构图。"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231c1917'/%3E%3Ccircle cx='16' cy='16' r='9.5' fill='none' stroke='%23d97706' stroke-width='1.6'/%3E%3Ccircle cx='16' cy='16' r='5.5' fill='none' stroke='%23d97706' stroke-width='1.2'/%3E%3Ccircle cx='16' cy='16' r='1.8' fill='%23d97706'/%3E%3C/svg%3E"
+    />
+    <title>Asset Atlas · 资产总览</title>
+    <script>
+      (() => {
+        const appearanceKey = "asset-atlas.appearance";
+        const paletteKey = "asset-atlas.palette";
+        const allowedAppearances = new Set(["light", "dark", "system"]);
+        const allowedPalettes = new Set(["aurum", "slate"]);
+        let appearance = "system";
+        let palette = "aurum";
+        try {
+          const storedAppearance = localStorage.getItem(appearanceKey);
+          if (allowedAppearances.has(storedAppearance)) {
+            appearance = storedAppearance;
+          }
+          const storedPalette = localStorage.getItem(paletteKey);
+          if (allowedPalettes.has(storedPalette)) palette = storedPalette;
+        } catch {}
+        const prefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)",
+        ).matches;
+        const resolved =
+          appearance === "system" ? (prefersDark ? "dark" : "light") : appearance;
+        document.documentElement.dataset.appearance = appearance;
+        document.documentElement.dataset.palette = palette;
+        document.documentElement.dataset.theme = resolved;
+        document.documentElement.style.colorScheme = resolved;
+      })();
+    </script>
+    <style id="asset-atlas-styles">
+/* ASSET_ATLAS_FOUNDATION_CSS */
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <noscript>
+      <p>此页面需要 JavaScript 才能提供搜索、筛选和详情浏览。</p>
+    </noscript>
+    <script src="/* ASSET_ATLAS_MERMAID */"></script>
+    <script>
+/* ASSET_ATLAS_DATA */
+    </script>
+    <script>
+/* ASSET_ATLAS_VIEWPORT_JS */
+    </script>
+    <script>
+/* ASSET_ATLAS_JS */
+    </script>
+  </body>
+</html>
