@@ -1,125 +1,35 @@
 # Asset Atlas · 个人资产地图
 
-给自己做过、部署过、仍在使用的工具留一张能找得到、能继续维护的卡片。
+中文｜[English](README.en.md)
 
-项目越来越多以后，麻烦往往不是缺一个导航链接，而是想不起来：这个工具解决什么问题，代码在哪，怎样启动，部署在哪，数据有没有备份，上次确认能用是什么时候。
+AI 时代，敲钉子越来越容易，做过的项目却散落各处。Asset Atlas 把它们收进一座资产收藏馆：用途、代码位置、启动方式和部署信息一目了然，支持本地查看和私有部署。
 
-Asset Atlas 用 **一资产一张 Markdown 卡片** 保存这些信息，再生成可搜索的页面。配套 skill 负责协助查找、登记、更新和归档。实现没有复杂的框架，更想分享的是这套持续整理个人项目的方法。
 
-![浅色、暖金主题下的 Asset Atlas 示例，含独立资产头像](docs/preview.webp)
+[在线体验](https://asset-atlas-nu.vercel.app) ·  [制作我的第一张卡](#制作我的第一张卡) · [使用指南](docs/usage.md)
 
-## 先体验
+![资产总览：每个项目都有自己的卡片和头像](docs/preview.webp)
+
+![卡片详情：用途、启动方式与可缩放的流程图](docs/preview-flow.webp)
+
+## 制作我的第一张卡
+
+运行命令，按提示选择编程助手：
+
+```sh
+npx skills add xPeiPeix/asset-atlas --skill manage-asset-atlas -g
+```
+
+安装后，在自己的项目里对助手说：
+
+> 使用 manage-asset-atlas，把当前项目做成第一张资产卡；资产库放在 ~/my-asset-atlas，不存在就创建，并打开本地预览。
+
+[完整指令](skills/manage-asset-atlas/references/first-card.md#完整可复制指令) · [本地查看与隐私](docs/local-use-and-privacy.md)
+
+## 一键部署私有的资产典藏库
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FxPeiPeix%2Fasset-atlas&project-name=asset-atlas&repository-name=asset-atlas)
 
-- **一键部署**：点击上方按钮，在自己的 Vercel 账号中创建项目并复制仓库；不需要数据库、API Key 或环境变量。
-- [在线体验示例地图](https://asset-atlas-nu.vercel.app)：无需下载或登录。
-- [下载离线演示 HTML](https://github.com/xPeiPeix/asset-atlas/releases/latest/download/asset-atlas.html)：保存后用浏览器打开，无需安装。
-- [查看配套 skill](skills/manage-asset-atlas/SKILL.md)：不用这个页面，也可以借鉴卡片维护方式。
-- 仓库自带 6 张活动卡片和 1 张归档卡片，每张均配有独立的馆藏印章头像。示例域名、路径和主机不代表真实服务。
+选择私有仓库，开启 **Vercel Authentication → All Deployments**（免费），再放入私人卡片。[设置步骤](docs/usage.md#部署到-vercel)
 
-Vercel 只发布构建出的 `dist/`。后续修改自己仓库中的卡片并提交，Git 集成会重新构建页面。默认是公开静态页面，不带登录保护；请先用示例体验，不要把自己的私人卡片直接部署成公开网站。按钮流程遵循 [Vercel Deploy Button 文档](https://vercel.com/docs/deploy-button)。
 
-## 这套方法
-
-1. **先说用途。** 每张卡第一句话说明这个工具解决什么问题，再记录代码、启动方式和入口。
-2. **一份详情。** 详细信息只保存在卡片；README 是摘要，页面从卡片生成，减少多处写了却忘记同步的情况。
-3. **编号保持不变。** `T-001` 是身份，名称和位置可以变。停用后移入 `archive/`，编号不复用。
-4. **让项目记得自己的卡片。** 在项目的 `AGENTS.md` 留下卡片位置，后续用途、入口或部署变化时，助手能找到该更新的记录。
-5. **把不确定写出来。** “待核验”和“已确认能用”分开；仅整理了文字，不刷新核验日期。
-
-不是每张卡都要填满。一个本地脚本可能只需要用途、路径、运行命令；有远端部署和数据库的工具再补相应字段。没有公开网址的定时任务、备份脚本也可以是一项资产。
-
-## 本地运行
-
-需要 Node.js 22 或更新版本。
-
-```sh
-git clone https://github.com/xPeiPeix/asset-atlas.git
-cd asset-atlas
-npm ci
-npm run check
-npm run serve
-```
-
-浏览器打开终端打印的本机地址。也可以直接打开生成的 `asset-atlas.html`；它包含页面、卡片和 Mermaid 运行时，离线也能搜索、筛选和查看关系图。页面里的外部网址自然仍需要联网。
-
-同一次构建还生成 `dist/index.html`，可用于 Vercel 或其他静态托管服务。
-
-界面支持分类、状态、全文搜索、排序、卡片详情、`#T-001` 直达、明暗主题、两套配色，以及关系图的全屏缩放。卡片中新增字段会自动进入详情，不需要同步修改前端。
-
-示例头像随仓库提供，也会内嵌进离线 HTML。需要为自己的卡片配图时，可参考[头像风格与文件规格](docs/avatar-style.md)。
-
-### 示例里可以看什么
-
-| 示例 | 展示内容 |
-|---|---|
-| T-000 · Asset Atlas | 业务流程图、搜索快捷键、Markdown 下载 |
-| T-001 · 口袋笔记 | 应用架构图、网站入口、数据库与备份、凭证存放位置 |
-| T-002 · 图片压缩小工具 | 简单本地工具、启动命令、编辑器入口 |
-| T-003 · 每日阅读摘要 | 定时任务、时序图、日志位置、自定义核验待办 |
-| T-004 · 小小博客 | 静态网站、部署说明、示例核验日期与排序 |
-| T-005 · 实验服务器 | SSH 入口、服务器与应用的关系图、关联资产 |
-| T-006 · 旧链接检查脚本 | 归档原因、保留编号、状态图 |
-
-这组卡片包含全部 5 种状态和 6 个分类，均有独立头像与标签。图表可以查看大图、缩放和拖动；搜索、分类、状态、排序和主题切换可直接在列表中体验。网址、SSH 别名、编辑器路径及核验日期均为演示数据。
-
-![浅色、暖金主题下的流程图与卡片详情](docs/preview-flow.webp)
-
-## 配套 skill
-
-分享版 skill 与代码放在同一个仓库：[`skills/manage-asset-atlas/`](skills/manage-asset-atlas/)。
-
-使用支持本地 skills 的工具时，将这个完整目录放入该工具的 skills 目录。以 Codex 为例，放在 `~/.codex/skills/manage-asset-atlas/`；已有同名目录时先比较内容，避免覆盖自己的修改。也可以直接让助手阅读仓库内的 `SKILL.md`。
-
-首次使用时明确告诉它你的资产库目录，之后可以这样说：
-
-> 使用 $manage-asset-atlas，把这个项目登记到我的资产库，先检查有没有已有卡片。只记录已确认的信息。
-
-> 这个项目的部署位置变了，请更新它原来的卡片，再重新生成资产地图。
-
-> 这个工具已经停用了，把原卡片归档，保留编号和停用原因。
-
-skill 会帮助维护卡片及项目中的反向链接；它不代表后台自动扫描，也不会凭空知道部署变化。需要把它纳入日常修改项目的流程。提交、推送、远端查询和网站发布仍按使用者的当次要求执行。
-
-## 开始记录自己的资产
-
-复制 [`templates/tool-entry.md`](templates/tool-entry.md)，保存成 `tools/T-007-your-tool.md`，填写标题、一句话用途和核心字段；在下方“全部工具”增加对应摘要，再运行 `npm run check`。校验输出会给出下一个可用编号，实际新增时以该输出为准。
-
-示例卡片用于解释格式，正式使用前可以清理示例并从自己的编号开始。已经正式分配给真实资产的编号则不要重复使用。`T-000` 留给资产地图自身。
-
-```text
-tools/       活动卡片，资产详情的事实源
-archive/     归档卡片，保留原编号
-templates/   新卡片模板
-skills/      可分享的维护 skill
-web/         页面源码
-scripts/     构建、校验与本地预览
-```
-
-这是本地静态工具，不带账号或密码保护。生成 HTML 包含全部卡片内容；把它放到公开网站或发送给别人，就等于分享这些内容。记录凭证时只写存放位置，不写密码、Token 或 Cookie。公开演示请使用示例卡片。
-
-## 全部工具
-
-| ID | 工具 | 分类 | 一句话用途 | 主要位置 | 状态 | 最近核验 |
-|---|---|---|---|---|---|---|
-| [T-000](tools/T-000-asset-atlas.md) | Asset Atlas | 开发平台与集成 | 用 Markdown 保存资产资料，并生成可搜索的地图。 | 本机 | 🟢 在用 | 未核验 |
-| [T-001](tools/T-001-pocket-notes.md) | 口袋笔记 | 网站与公开服务 | 保存零散想法，在需要时按关键词找回来。 | 本机 + 示例服务器 | 🟢 在用 | 2026-09-12 |
-| [T-002](tools/T-002-image-compressor.md) | 图片压缩小工具 | 文件与媒体工具 | 批量缩小图片，方便贴到文档和网页里。 | 本机 | 🟡 低频 | 未核验 |
-| [T-003](tools/T-003-daily-digest.md) | 每日阅读摘要 | 信息检索与 AI | 把订阅源的新文章汇总成一份待读清单。 | 示例服务器 | ⚪ 待核验 | 未核验 |
-| [T-004](tools/T-004-tiny-blog.md) | 小小博客 | 网站与公开服务 | 发布自己的工具使用心得和项目记录。 | Git 仓库 + 静态托管 | 🟢 在用 | 2026-09-20 |
-| [T-005](tools/T-005-lab-server.md) | 实验服务器 | 网络、服务器与运维 | 为笔记和每日摘要提供一处可定位的运行环境。 | 示例云主机 | 🧪 开发中 | 未核验 |
-
-## 已归档
-
-| ID | 工具 | 原用途 | 最后位置 | 归档日期 | 归档原因 |
-|---|---|---|---|---|---|
-| [T-006](archive/T-006-old-link-checker.md) | 旧链接检查脚本 | 定期检查博客里的外部链接是否可访问。 | 本机 | 2026-09-01 | 示例：已由博客构建流程接替。 |
-
-所有卡片的状态、核验日期和归档日期仅用于展示。示例不代表对真实项目完成过运行核验。
-
-## 许可与反馈
-
-代码、模板及配套 skill 使用 [MIT License](LICENSE)。
-
-欢迎通过 [Issues](https://github.com/xPeiPeix/asset-atlas/issues) 反馈使用问题。尤其想知道：卡片字段会不会太多、第一次登记是否顺手，以及项目变化后怎样提醒更新最自然。
+[MIT](LICENSE) · [反馈](https://github.com/xPeiPeix/asset-atlas/issues) ·  **Star** 。

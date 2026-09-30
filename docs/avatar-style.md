@@ -14,6 +14,14 @@
 | T-005 | 实验服务器 | 三层服务器塔与连接节点 | 钴石蓝 `#4B68A1` |
 | T-006 | 旧链接检查脚本 | 链环与归档盒 | 石板灰 `#76818D` |
 
+## 没有生图工具时，直接用代码画
+
+专属头像不依赖 ImageGen。Claude 等未接入生图工具的助手可以直接编写 SVG、Canvas 或其他绘图代码，用几何形状、描边和渐变画出同风格的圆章，再导出 WebP；项目继续使用同一套头像格式。
+
+配套 skill 包含[可编辑的 SVG 样例](../skills/manage-asset-atlas/assets/avatar-seal.svg)和[原生代码绘图说明](../skills/manage-asset-atlas/references/code-avatars.md)，安装后一起可用。按项目用途替换中央符号，不需要另接生图服务。
+
+## 有生图工具时
+
 可以用下面的提示词思路绘制新的同风格头像。一次生成一枚，替换中央符号和强调色；只提供用途对应的抽象意象，不发送完整资产卡片。
 
 ```text
@@ -26,6 +34,8 @@ Keep a consistent front-facing composition, line weight and soft lighting.
 Use a genuinely transparent background, with no colored backdrop.
 No text, letters, numbers, logos, extra objects or cropped edges.
 ```
+
+## 共同文件规格
 
 文件要求：256×256、带 alpha 的 WebP，单文件不超过 32 KiB。卡片中的引用格式为：
 

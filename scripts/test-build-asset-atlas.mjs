@@ -26,37 +26,16 @@ function cardMarkdown(id = "T-000", archived = false) {
 ${archived ? "| 归档日期 | 2026-09-01 |\n| 归档原因 | Replaced. |\n" : ""}
 `;
 }
-function readmeFor(cards) {
-  return `## 全部工具
-
-| ID | 工具 | 分类 | 一句话用途 | 主要位置 | 状态 | 最近核验 |
-|---|---|---|---|---|---|---|
-${cards.filter((card) => !card.archived).map((card) =>
-    `| [${card.id}](${card.sourcePath}) | ${card.name} | ${card.category} | ${card.summary} | ${card.mainLocation} | ${card.status} | ${card.lastVerified} |`,
-  ).join("\n")}
-
-## 已归档
-
-| ID | 工具 | 原用途 | 最后位置 | 归档日期 | 归档原因 |
-|---|---|---|---|---|---|
-${cards.filter((card) => card.archived).map((card) =>
-    `| [${card.id}](${card.sourcePath}) | ${card.name} | ${card.summary} | ${card.mainLocation} | ${card.archiveDate} | ${card.archiveReason} |`,
-  ).join("\n")}
-`;
-}
 
 const atlas = parseCard(cardMarkdown(), "tools/T-000-example.md", false);
 const archived = parseCard(cardMarkdown("T-012", true), "archive/T-012-example.md", true);
 assert.equal(atlas.lastVerified, "未核验");
 assert.equal(atlas.tags.length, 0);
 assert.equal(atlas.markdown, cardMarkdown());
-assert.equal(validateIndex(readmeFor([atlas, archived]), [atlas, archived]), "T-013");
-assert.equal(validateIndex(readmeFor([atlas]), [atlas]), "T-001");
-assert.throws(() => validateIndex(readmeFor([atlas]), [atlas, atlas]), /Duplicate permanent ID/);
-assert.throws(() => validateIndex(readmeFor([archived]), [archived]), /T-000 must exist/);
-assert.throws(() => validateIndex(readmeFor([atlas]).replace("Find a useful tool again.", "Different."), [atlas]), /README summary differs/);
-assert.throws(() => validateIndex(readmeFor([atlas]).replace("tools/T-000-example.md", "tools/T-001-example.md"), [atlas]), /Invalid or duplicate README card link/);
-assert.throws(() => validateIndex(readmeFor([atlas]), [atlas, archived]), /missing cards/);
+assert.equal(validateIndex([atlas, archived]), "T-013");
+assert.equal(validateIndex([atlas]), "T-001");
+assert.throws(() => validateIndex([atlas, atlas]), /Duplicate permanent ID/);
+assert.throws(() => validateIndex([archived]), /T-000 must exist/);
 for (const id of ["T-0", "T-00", "T-0000", "T-0101", "T-9007199254740992"]) {
   assert.throws(() => parseCard(cardMarkdown(id), `tools/${id}-example.md`, false), /Invalid card heading/);
 }

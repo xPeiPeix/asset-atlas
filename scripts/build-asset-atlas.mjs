@@ -469,7 +469,7 @@ async function readCards(directoryName, archived, baseRoot = projectRoot) {
   );
 }
 
-function validateIndex(readme, cards) {
+function validateIndex(cards) {
   const ids = new Set();
   for (const card of cards) {
     if (ids.has(card.id)) throw new Error(`Duplicate permanent ID: ${card.id}`);
@@ -477,54 +477,6 @@ function validateIndex(readme, cards) {
   }
   if (!cards.some((card) => card.id === "T-000" && !card.archived)) {
     throw new Error("T-000 must exist in tools/.");
-  }
-  const definitions = {
-    "全部工具": {
-      header: ["ID", "工具", "分类", "一句话用途", "主要位置", "状态", "最近核验"],
-      cards: cards.filter((card) => !card.archived),
-      values: (card) => [card.name, card.category, card.summary, card.mainLocation, card.status, card.lastVerified],
-    },
-    "已归档": {
-      header: ["ID", "工具", "原用途", "最后位置", "归档日期", "归档原因"],
-      cards: cards.filter((card) => card.archived),
-      values: (card) => [card.name, card.summary, card.mainLocation, card.archiveDate, card.archiveReason],
-    },
-  };
-  const sections = new Map();
-  let section = null;
-  for (const line of linesOutsideFences(readme)) {
-    const heading = line.match(/^##\s+(.+?)\s*$/);
-    if (heading) {
-      section = Object.hasOwn(definitions, heading[1]) ? heading[1] : null;
-      if (section) {
-        if (sections.has(section)) throw new Error(`Duplicate README section: ${section}`);
-        sections.set(section, []);
-      }
-    } else if (section && line.startsWith("|")) {
-      sections.get(section).push(splitMarkdownTableRow(line));
-    }
-  }
-  for (const [name, definition] of Object.entries(definitions)) {
-    const rows = sections.get(name);
-    if (!rows || JSON.stringify(rows[0]) !== JSON.stringify(definition.header)) {
-      throw new Error(`Missing or invalid README table header: ${name}`);
-    }
-    const dataRows = rows.slice(1).filter((row) => !row.every((cell) => /^:?-+:?$/.test(cell)));
-    const seen = new Set();
-    for (const row of dataRows) {
-      const link = row[0]?.match(/^\[(T-\d{3,})\]\(([^)]+)\)$/);
-      const card = definition.cards.find((candidate) => candidate.id === link?.[1]);
-      if (!card || link[2] !== card.sourcePath || seen.has(card.id)) {
-        throw new Error(`Invalid or duplicate README card link in ${name}: ${row[0]}`);
-      }
-      if (JSON.stringify(row.slice(1)) !== JSON.stringify(definition.values(card))) {
-        throw new Error(`README summary differs from card: ${card.id}`);
-      }
-      seen.add(card.id);
-    }
-    if (seen.size !== definition.cards.length) {
-      throw new Error(`README table is missing cards: ${name}`);
-    }
   }
   const next = Math.max(...cards.map((card) => card.numericId)) + 1;
   return `T-${String(next).padStart(3, "0")}`;
@@ -789,7 +741,7 @@ async function build() {
   const parsedCards = [...activeCards, ...archivedCards].sort(
     (left, right) => left.numericId - right.numericId,
   );
-  const nextId = validateIndex(readme, parsedCards);
+  const nextId = validateIndex(parsedCards);
   await validateMermaidSyntax(parsedCards);
   const cards = await attachAvatars(parsedCards);
   const payload = {

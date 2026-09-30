@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="gold" x1="48" y1="30" x2="206" y2="229" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F1D99C"/>
+      <stop offset="0.32" stop-color="#B58A45"/>
+      <stop offset="0.57" stop-color="#E5C581"/>
+      <stop offset="1" stop-color="#86612D"/>
+    </linearGradient>
+    <radialGradient id="enamel" cx="92" cy="68" r="178" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#30332E"/>
+      <stop offset="0.62" stop-color="#171C1B"/>
+      <stop offset="1" stop-color="#0B1011"/>
+    </radialGradient>
+    <linearGradient id="teal" x1="101" y1="86" x2="156" y2="167" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#81B3A7"/>
+      <stop offset="1" stop-color="#3B706B"/>
+    </linearGradient>
+  </defs>
+  <g id="seal-frame">
+    <circle cx="128" cy="128" r="109" fill="#211D16" stroke="url(#gold)" stroke-width="2"/>
+    <circle cx="128" cy="128" r="104" fill="url(#enamel)" stroke="url(#gold)" stroke-width="4"/>
+    <circle cx="128" cy="128" r="95" fill="none" stroke="#7D6135" stroke-width="1"/>
+    <circle cx="128" cy="128" r="91" fill="none" stroke="#D6B775" stroke-opacity="0.48" stroke-width="1"/>
+    <path d="M128 36v7M128 213v7M36 128h7M213 128h7M63 63l5 5M188 188l5 5M63 193l5-5M188 68l5-5" fill="none" stroke="url(#gold)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M57 80a84 84 0 0 1 75-36" fill="none" stroke="#F1D99C" stroke-opacity="0.35" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+  <g id="central-symbol" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M77 92Q103 87 128 101Q153 87 179 92V153Q152 150 128 164Q104 150 77 153Z" fill="#0E1414" stroke="url(#gold)" stroke-width="4"/>
+    <path d="M84 100Q108 96 128 108V153Q106 142 84 144Z" fill="#C8AE74" fill-opacity="0.2"/>
+    <path d="M136 103Q153 96 172 100V144Q154 144 136 152Z" fill="url(#teal)"/>
+    <path d="M128 103v59M90 114q15-1 25 5M90 127q15-1 25 5" fill="none" stroke="#E3C78B" stroke-width="3"/>
+    <path d="M154 78v37l8-5 8 5V78Z" fill="url(#gold)" stroke="#E4CB92" stroke-width="1"/>
+    <path d="M128 166v13M98 187v-8h60v8" fill="none" stroke="url(#gold)" stroke-width="3"/>
+    <circle cx="98" cy="189" r="5" fill="#76AA9E" stroke="#CFB473" stroke-width="2"/>
+    <circle cx="128" cy="179" r="4" fill="#DFC489"/>
+    <circle cx="158" cy="189" r="5" fill="#76AA9E" stroke="#CFB473" stroke-width="2"/>
+  </g>
+</svg>
