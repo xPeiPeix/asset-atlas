@@ -33,3 +33,5 @@ npx skills add xPeiPeix/asset-atlas --skill manage-asset-atlas -g
 
 
 [MIT](LICENSE) · [反馈](https://github.com/xPeiPeix/asset-atlas/issues) ·  **Star** 。
+
+友情链接：[LINUX DO](https://linux.do/)

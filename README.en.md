@@ -31,3 +31,5 @@ Then open your project and ask your assistant:
 Choose a private repository and enable **Vercel Authentication → All Deployments** (free) before adding personal cards. [Setup steps](docs/usage.md#部署到-vercel)
 
 [MIT](LICENSE) · [Feedback](https://github.com/xPeiPeix/asset-atlas/issues) · **Star**
+
+Community: [LINUX DO](https://linux.do/)
