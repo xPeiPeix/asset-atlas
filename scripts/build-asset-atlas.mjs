@@ -710,7 +710,7 @@ async function attachAvatars(cards) {
   return Promise.all(cards.map((card) => loadAvatar(card)));
 }
 
-async function build() {
+async function build({ privateMode = false } = {}) {
   const [
     activeCards,
     archivedCards,
@@ -760,7 +760,9 @@ async function build() {
     ["/* ASSET_ATLAS_FOUNDATION_CSS */", stylesheet],
     [
       "/* ASSET_ATLAS_DATA */",
-      `window.__ASSET_ATLAS__ = ${safeScriptJson(payload)};`,
+      privateMode
+        ? 'window.__ASSET_ATLAS_ENDPOINT__ = "/api/data";'
+        : `window.__ASSET_ATLAS__ = ${safeScriptJson(payload)};`,
     ],
     ["/* ASSET_ATLAS_MERMAID */", mermaidDataUrl],
     ["/* ASSET_ATLAS_VIEWPORT_JS */", viewportJavascript],
@@ -772,34 +774,48 @@ async function build() {
     template,
   );
 
-  const outputPath = path.join(projectRoot, "asset-atlas.html");
   const outputBytes = Buffer.byteLength(html);
   if (outputBytes > htmlMaxBytes) {
     throw new Error(
       `asset-atlas.html exceeds ${htmlMaxBytes} bytes (${outputBytes}).`,
     );
   }
-  const temporaryPath = path.join(projectRoot, `.asset-atlas.html.${process.pid}.tmp`);
-  const distributionDirectory = path.join(projectRoot, "dist");
-  const distributionTemporaryPath = path.join(distributionDirectory, `.index.html.${process.pid}.tmp`);
-  await mkdir(distributionDirectory, { recursive: true });
+  const outputs = privateMode
+    ? [
+        [".asset-atlas/index.html", html],
+        [".asset-atlas/data.json", `${JSON.stringify(payload)}\n`],
+      ]
+    : [["asset-atlas.html", html], ["dist/index.html", html]];
+  const files = outputs.map(([filename, content]) => ({
+    destination: path.join(projectRoot, filename),
+    temporary: path.join(projectRoot, `${filename}.${process.pid}.tmp`),
+    content,
+  }));
+  await mkdir(path.join(projectRoot, privateMode ? ".asset-atlas" : "dist"), {
+    recursive: true,
+    ...(privateMode ? { mode: 0o700 } : {}),
+  });
   try {
-    await Promise.all([
-      writeFile(temporaryPath, html, "utf8"),
-      writeFile(distributionTemporaryPath, html, "utf8"),
-    ]);
-    await rename(temporaryPath, outputPath);
-    await rename(distributionTemporaryPath, path.join(distributionDirectory, "index.html"));
+    await Promise.all(files.map(({ temporary, content }) =>
+      writeFile(temporary, content, {
+        encoding: "utf8",
+        flag: "wx",
+        ...(privateMode ? { mode: 0o600 } : {}),
+      }),
+    ));
+    for (const { temporary, destination } of files) {
+      await rename(temporary, destination);
+    }
   } catch (error) {
-    await Promise.all([temporaryPath, distributionTemporaryPath].map((candidate) =>
-      unlink(candidate).catch((cleanupError) => {
+    await Promise.all(files.map(({ temporary }) =>
+      unlink(temporary).catch((cleanupError) => {
         if (cleanupError.code !== "ENOENT") throw cleanupError;
       }),
     ));
     throw error;
   }
   process.stdout.write(
-    `Built asset-atlas.html and dist/index.html from ${activeCards.length} active and ${archivedCards.length} archived Markdown cards (${outputBytes} bytes each). next_id=${nextId}\n`,
+    `Built ${outputs.map(([filename]) => filename).join(" and ")} from ${activeCards.length} active and ${archivedCards.length} archived Markdown cards. next_id=${nextId}\n`,
   );
 }
 
@@ -808,7 +824,11 @@ const isDirectExecution =
   path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 
 if (isDirectExecution) {
-  await build();
+  const args = process.argv.slice(2);
+  if (args.some((arg) => arg !== "--private")) {
+    throw new Error("Usage: node scripts/build-asset-atlas.mjs [--private]");
+  }
+  await build({ privateMode: args.includes("--private") });
 }
 
 export {

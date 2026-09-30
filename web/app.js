@@ -5,8 +5,77 @@
   if (!root) {
     throw new Error("Asset Atlas app root is missing.");
   }
-  const atlas = window.__ASSET_ATLAS__;
-  if (!atlas || !Array.isArray(atlas.cards)) throw new Error("Asset Atlas embedded data is missing.");
+  const atlasEndpoint = window.__ASSET_ATLAS_ENDPOINT__;
+  const privacyEnabled = typeof atlasEndpoint === "string";
+  const apiUrl = (route) => new URL(route, new URL(atlasEndpoint, location.href)).href;
+  const hiddenSessionKey = "asset-atlas.session-hidden";
+  let sessionHidden = false;
+  try { sessionHidden = sessionStorage.getItem(hiddenSessionKey) === "true"; } catch {}
+
+  function hideSession(hidden) {
+    sessionHidden = hidden;
+    try {
+      if (hidden) sessionStorage.setItem(hiddenSessionKey, "true");
+      else sessionStorage.removeItem(hiddenSessionKey);
+    } catch {}
+  }
+
+  function withoutPrivateDetails(payload) {
+    return {
+      ...payload,
+      authenticated: false,
+      metadata: { ...payload.metadata, rootPath: "" },
+      cards: payload.cards.map((card) => card.locked ? {
+        id: card.id, numericId: card.numericId, name: card.name,
+        archived: card.archived, status: card.status, category: card.category,
+        lastVerified: card.lastVerified, avatarDataUrl: card.avatarDataUrl,
+        locked: true, detailsAvailable: false,
+        summary: "此资产已封存，输入密码后可查看完整资料。",
+        tags: [], fields: [], links: [], diagrams: [],
+        searchableText: [card.id, card.name, card.status, card.category, card.lastVerified].join(" "),
+      } : card),
+    };
+  }
+
+  async function fetchAtlasData() {
+    const response = await fetch(atlasEndpoint, {
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) {
+      throw new Error(`Asset Atlas data request failed (${response.status}).`);
+    }
+    const payload = await response.json();
+    if (!payload || !Array.isArray(payload.cards) || !payload.counts) {
+      throw new Error("Asset Atlas data response is invalid.");
+    }
+    return sessionHidden ? withoutPrivateDetails(payload) : payload;
+  }
+
+  let atlas;
+  try {
+    if (privacyEnabled) {
+      root.innerHTML = `<main class="boot-error" role="status"><h1>正在读取资产资料…</h1></main>`;
+      atlas = await fetchAtlasData();
+    } else {
+      atlas = window.__ASSET_ATLAS__;
+      if (!atlas || !Array.isArray(atlas.cards)) throw new Error("Asset Atlas embedded data is missing.");
+    }
+  } catch {
+    root.innerHTML = `
+      <main class="boot-error" role="alert">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <h1>资产资料暂时无法读取</h1>
+        <p>请稍后刷新页面。已加锁资产的资料不会在连接失败时降级公开。</p>
+        <button type="button" data-reload-page>重新加载</button>
+      </main>
+    `;
+    root.querySelector("[data-reload-page]")?.addEventListener("click", () =>
+      location.reload(),
+    );
+    return;
+  }
 
   const preferredCategoryOrder = [
     "网站与公开服务",
@@ -32,6 +101,8 @@
     selectedId: null,
     detailOpen: false,
     diagramModal: null,
+    privacyDialog: null,
+    sessionError: "",
     visibleLimit: 60,
     appearance: allowedAppearances.has(
       document.documentElement.dataset.appearance,
@@ -44,6 +115,7 @@
   };
   let lastDetailTriggerId = null;
   let lastDiagramTrigger = null;
+  let lastPrivacyTrigger = null;
   let listScrollPosition = 0;
   let restoreListAfterRender = false;
   let diagramRenderGeneration = 0;
@@ -89,6 +161,12 @@
       '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="4.6"/></svg>',
     diagram:
       '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="6" height="6" rx="1.5"/><rect x="15" y="15" width="6" height="6" rx="1.5"/><path d="M6 9v3.5A2.5 2.5 0 0 0 8.5 15H15"/></svg>',
+    lock:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8.5 10V7.5a3.5 3.5 0 0 1 7 0V10M12 14v2.5"/></svg>',
+    unlock:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8.5 10V7.5a3.5 3.5 0 0 1 6.3-2.1M12 14v2.5"/></svg>',
+    shield:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 19 6v5.5c0 4.4-2.8 7.6-7 9.5-4.2-1.9-7-5.1-7-9.5V6Z"/><path d="m9 12 2 2 4-4"/></svg>',
   };
 
   function escapeHtml(value) {
@@ -212,6 +290,98 @@
 
   function getField(card, key) {
     return card.fields.find((field) => field.key === key);
+  }
+
+  async function loginWithPassword(password) {
+    const response = await fetch(apiUrl("session/login"), {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ password }),
+    });
+    if (response.status === 401) {
+      throw new Error("密码不正确，请重新输入。");
+    }
+    if (!response.ok) {
+      throw new Error("暂时无法验证密码，请稍后重试。");
+    }
+    hideSession(false);
+  }
+
+  async function mutateLock(cardId, method) {
+    const response = await fetch(
+      apiUrl(`locks/${encodeURIComponent(cardId)}`),
+      {
+        method,
+        credentials: "same-origin",
+        headers: { Accept: "application/json" },
+      },
+    );
+    if (response.status === 401) {
+      discardSessionDetails();
+      throw new Error("解锁会话已过期，请重新输入密码。");
+    }
+    if (!response.ok) {
+      throw new Error("暂时无法保存加锁状态，请稍后重试。");
+    }
+  }
+
+  function syncSessionControl() {
+    const control = root.querySelector(".privacy-session-control");
+    if (control) control.hidden = !atlas.authenticated;
+    const notice = root.querySelector(".privacy-session-notice");
+    if (notice) {
+      notice.hidden = !state.sessionError;
+      notice.innerHTML = state.sessionError
+        ? `<span>${escapeHtml(state.sessionError)}</span><button type="button" data-action="end-privacy-session">重试结束会话</button>`
+        : "";
+    }
+  }
+
+  function reconcileAtlasView() {
+    const selectedCard = atlas.cards.find((card) => card.id === state.selectedId);
+    if (state.detailOpen && selectedCard?.detailsAvailable === false) {
+      if (state.diagramModal) closeDiagram({ restoreFocus: false });
+      state.detailOpen = false;
+      restoreListAfterRender = true;
+      history.replaceState(
+        navigationState("list", { list: listSnapshot() }), "",
+        `${location.pathname}${location.search}`,
+      );
+    }
+    renderDynamic();
+    syncSessionControl();
+  }
+
+  function discardSessionDetails() {
+    hideSession(true);
+    atlas = withoutPrivateDetails(atlas);
+    reconcileAtlasView();
+  }
+
+  async function refreshAtlasData() {
+    atlas = await fetchAtlasData();
+    reconcileAtlasView();
+  }
+
+  async function logoutPrivacySession() {
+    if (state.privacyDialog) closePrivacyDialog({ restoreFocus: false });
+    discardSessionDetails();
+    state.sessionError = "";
+    try {
+      const response = await fetch(apiUrl("session/logout"), {
+        method: "POST", credentials: "same-origin",
+        headers: { Accept: "application/json" },
+      });
+      if (!response.ok) throw new Error("Logout failed.");
+      await refreshAtlasData();
+    } catch {
+      state.sessionError = "本页已隐藏私密资料，但服务连接失败，请重试结束服务器会话。";
+    }
+    syncSessionControl();
   }
 
   function getFilteredCards() {
@@ -589,10 +759,22 @@
                 <span>石墨</span>
               </button>
             </div>
+            ${privacyEnabled ? `<button
+              class="privacy-session-control"
+              type="button"
+              data-action="end-privacy-session"
+              title="已解锁私密资产，点击结束本次解锁"
+              aria-label="结束私密资产解锁会话"
+              ${atlas.authenticated ? "" : "hidden"}
+            >
+              <span>${icons.shield}</span>
+              <span>已解锁</span>
+            </button>` : ""}
             <button class="appearance-button" type="button" data-action="cycle-appearance"></button>
           </div>
         </header>
 
+        ${privacyEnabled ? `<div class="privacy-session-notice" role="alert" hidden></div>` : ""}
         <main class="browse-view">
           <div class="hero">
             <div>
@@ -613,6 +795,7 @@
         <main class="detail-view" aria-label="资产详情" hidden></main>
 
         <dialog class="diagram-dialog" aria-labelledby="diagram-dialog-title"></dialog>
+        ${privacyEnabled ? `<dialog class="privacy-dialog" aria-labelledby="privacy-dialog-title"></dialog>` : ""}
       </div>
     `;
   }
@@ -706,14 +889,21 @@
         .map((card) => {
           const status = statusInfo(card.status);
           const isSelected = state.selectedId === card.id && state.detailOpen;
+          const isSealed = card.locked && !card.detailsAvailable;
+          const privacyAction = card.locked ? "unseal" : "lock";
+          const privacyLabel = card.locked ? "取消加锁" : "设为私密";
           return `
             <li>
-              <article class="asset-card-frame">
+              <article class="asset-card-frame${card.locked ? " is-private" : ""}${card.detailsAvailable ? " is-authorized" : ""}">
                 <button
                   class="asset-card${isSelected ? " is-selected" : ""}"
                   type="button"
                   data-asset-id="${escapeAttribute(card.id)}"
-                  aria-label="查看 ${escapeAttribute(card.name)} 详情"
+                  aria-label="${
+                    isSealed
+                      ? `解锁 ${escapeAttribute(card.name)}`
+                      : `查看 ${escapeAttribute(card.name)} 详情`
+                  }"
                   aria-current="${isSelected ? "true" : "false"}"
                 >
                   <span class="asset-card-top">
@@ -732,7 +922,17 @@
                       : ""
                   }</span>
                   <span class="asset-card-meta">${escapeHtml(card.category)} · ${escapeHtml(card.lastVerified)}</span>
+                  ${
+                    card.locked
+                      ? `<span class="asset-card-lock-rail"><span>${isSealed ? "私密 · 点击解封" : "私密资产 · 已解封"}</span></span>`
+                      : ""
+                  }
                 </button>
+                ${
+                  privacyEnabled && !isSealed
+                    ? `<button class="asset-privacy-action" type="button" data-action="open-privacy" data-card-id="${escapeAttribute(card.id)}" data-privacy-intent="${privacyAction}" aria-label="${privacyLabel}：${escapeAttribute(card.name)}" title="${privacyLabel}"><span>${card.locked ? icons.unlock : icons.lock}</span><span>${privacyLabel}</span></button>`
+                    : ""
+                }
               </article>
             </li>
           `;
@@ -748,6 +948,166 @@
         `
         : "");
   }
+
+  /* ---------- asset privacy ---------- */
+
+  function privacyCard() {
+    return atlas.cards.find(
+      (card) => card.id === state.privacyDialog?.cardId,
+    );
+  }
+
+  function renderPrivacyDialog() {
+    const dialog = root.querySelector(".privacy-dialog");
+    const card = privacyCard();
+    const modal = state.privacyDialog;
+    if (!dialog || !card || !modal) return;
+
+    const needsPassword = !atlas.authenticated;
+    const content = {
+      unlock: {
+        eyebrow: "PRIVATE ASSET",
+        title: "这件资产已被封存",
+        description: "输入访问密码，本次会话即可查看所有已加锁资产的完整资料。加锁状态仍会保留。",
+        primary: "解锁查看",
+        operation: "unlock",
+      },
+      lock: {
+        eyebrow: "SEAL AS PRIVATE",
+        title: "将这件资产设为私密",
+        description: "访客仍可读取名称、编号、分类、状态、核验日期和头像；运行位置、链接和其他详情需要密码才能查看。",
+        primary: "确认加锁",
+        operation: "lock",
+      },
+      unseal: {
+        eyebrow: "REMOVE PRIVATE SEAL",
+        title: "取消这件资产的加锁",
+        description: "取消后，完整资产资料会重新对所有访客开放。",
+        primary: "取消加锁",
+        operation: "unseal",
+      },
+    }[modal.intent];
+
+    dialog.innerHTML = `
+      <form class="privacy-dialog-shell" method="dialog" data-privacy-form>
+        <button class="privacy-dialog-close" type="button" data-action="close-privacy" aria-label="关闭">
+          ${icons.close}
+        </button>
+        <div class="privacy-seal-stage" aria-hidden="true">
+          ${renderAvatar(card, "privacy-asset-avatar")}
+          <span class="privacy-seal-orbit"></span>
+          <span class="privacy-seal-key">${modal.intent === "lock" ? icons.lock : icons.unlock}</span>
+        </div>
+        <p class="privacy-eyebrow">${content.eyebrow}</p>
+        <h2 id="privacy-dialog-title">${content.title}</h2>
+        <p class="privacy-asset-name">${escapeHtml(card.id)} · ${escapeHtml(card.name)}</p>
+        <p class="privacy-description">${content.description}</p>
+        ${
+          needsPassword
+            ? `
+              <input type="text" name="username" value="asset-atlas" autocomplete="username" hidden />
+              <label class="privacy-password-label" for="privacy-password">访问密码</label>
+              <div class="privacy-password-field">
+                <span>${icons.lock}</span>
+                <input id="privacy-password" name="password" type="password" autocomplete="current-password" required ${modal.busy ? "disabled" : ""} />
+              </div>
+            `
+            : `<div class="privacy-session-note"><span>${icons.shield}</span><span>当前会话已通过密码验证</span></div>`
+        }
+        <p class="privacy-message${modal.error ? " has-error" : ""}" aria-live="polite">${escapeHtml(modal.error ?? "")}</p>
+        <div class="privacy-actions">
+          <button class="privacy-primary" type="submit" data-privacy-operation="${content.operation}" ${modal.busy ? "disabled" : ""}>
+            <span>${modal.busy ? "正在保存…" : content.primary}</span>
+          </button>
+          ${
+            modal.intent === "unlock"
+              ? `<button class="privacy-secondary" type="submit" data-privacy-operation="unseal" ${modal.busy ? "disabled" : ""}>取消这件资产的加锁</button>`
+              : ""
+          }
+          <button class="privacy-cancel" type="button" data-action="close-privacy" ${modal.busy ? "disabled" : ""}>暂不处理</button>
+        </div>
+        <p class="privacy-footnote">密码只提交给同源认证服务，不会写入页面或浏览器存储。</p>
+      </form>
+    `;
+    if (!dialog.open) dialog.showModal();
+    syncBodyLock();
+    requestAnimationFrame(() => {
+      const focusTarget = needsPassword
+        ? dialog.querySelector("#privacy-password")
+        : dialog.querySelector(".privacy-primary");
+      focusTarget?.focus();
+    });
+  }
+
+  function openPrivacyDialog(cardId, intent, trigger) {
+    const card = atlas.cards.find((item) => item.id === cardId);
+    if (!privacyEnabled || !card) return;
+    const resolvedIntent =
+      intent ??
+      (card.locked
+        ? card.detailsAvailable
+          ? "unseal"
+          : "unlock"
+        : "lock");
+    lastPrivacyTrigger = trigger ?? null;
+    state.privacyDialog = {
+      cardId,
+      intent: resolvedIntent,
+      busy: false,
+      error: "",
+    };
+    renderPrivacyDialog();
+  }
+
+  function closePrivacyDialog({ restoreFocus = true } = {}) {
+    const dialog = root.querySelector(".privacy-dialog");
+    if (state.privacyDialog?.busy) return;
+    if (dialog?.open) dialog.close();
+    if (dialog) dialog.innerHTML = "";
+    state.privacyDialog = null;
+    const focusTarget = lastPrivacyTrigger;
+    lastPrivacyTrigger = null;
+    if (restoreFocus) {
+      requestAnimationFrame(() => focusTarget?.isConnected && focusTarget.focus());
+    }
+    syncBodyLock();
+  }
+
+  async function handlePrivacySubmit(event) {
+    const form = event.target.closest("[data-privacy-form]");
+    if (!form || !state.privacyDialog) return;
+    event.preventDefault();
+    if (state.privacyDialog.busy) return;
+
+    const operation =
+      event.submitter?.dataset.privacyOperation ?? state.privacyDialog.intent;
+    const cardId = state.privacyDialog.cardId;
+    const password = new FormData(form).get("password")?.toString() ?? "";
+    state.privacyDialog.busy = true;
+    state.privacyDialog.error = "";
+    renderPrivacyDialog();
+
+    try {
+      if (!atlas.authenticated) {
+        if (!password) throw new Error("请输入访问密码。");
+        await loginWithPassword(password);
+      }
+      if (operation === "lock") await mutateLock(cardId, "PUT");
+      if (operation === "unseal") await mutateLock(cardId, "DELETE");
+      await refreshAtlasData();
+      state.sessionError = "";
+      state.privacyDialog.busy = false;
+      closePrivacyDialog({ restoreFocus: operation !== "unlock" });
+      if (operation === "unlock") selectCard(cardId);
+    } catch (error) {
+      if (!state.privacyDialog) return;
+      state.privacyDialog.busy = false;
+      state.privacyDialog.error = error.message;
+      renderPrivacyDialog();
+    }
+  }
+
+  /* ---------- detail ---------- */
 
   function renderFacts(card, fieldNames) {
     return fieldNames
@@ -974,7 +1334,7 @@
 
     shell.classList.toggle("detail-is-open", Boolean(card && state.detailOpen));
 
-    if (!card || !state.detailOpen) {
+    if (!card || !state.detailOpen || card.detailsAvailable === false) {
       panel.innerHTML = "";
       panel.hidden = true;
       browse.hidden = false;
@@ -991,6 +1351,17 @@
           <span>${icons.back}</span>
           <span>返回资产列表</span>
         </button>
+        ${privacyEnabled ? `<div class="detail-privacy-actions">
+          <button class="detail-privacy-button${card.locked ? " is-private" : ""}" type="button" data-action="open-privacy" data-card-id="${escapeAttribute(card.id)}" data-privacy-intent="${card.locked ? "unseal" : "lock"}">
+            <span>${card.locked ? icons.unlock : icons.lock}</span>
+            <span>${card.locked ? "取消加锁" : "设为私密"}</span>
+          </button>
+          ${
+            card.locked && atlas.authenticated
+              ? `<button class="detail-end-session" type="button" data-action="end-privacy-session">结束本次解锁</button>`
+              : ""
+          }
+        </div>` : ""}
       </div>
 
       <header class="detail-header">
@@ -1008,6 +1379,11 @@
             <button class="detail-chip" type="button" data-category="${escapeAttribute(card.category)}">
               ${escapeHtml(card.category)}
             </button>
+            ${
+              card.locked
+                ? `<span class="detail-chip detail-private-chip"><span>${icons.shield}</span><span>私密 · 已解锁</span></span>`
+                : ""
+            }
           </div>
           <p class="detail-summary">${escapeHtml(card.summary)}</p>
         </div>
@@ -1386,7 +1762,7 @@
   function syncBodyLock() {
     document.body.classList.toggle(
       "no-scroll",
-      Boolean(state.diagramModal),
+      Boolean(state.diagramModal || state.privacyDialog),
     );
   }
 
@@ -1514,6 +1890,11 @@
   function selectCard(id) {
     const card = atlas.cards.find((item) => item.id === id);
     if (!card) return;
+    if (card.locked && !card.detailsAvailable) {
+      const trigger = root.querySelector(`[data-asset-id="${id}"]`);
+      openPrivacyDialog(id, "unlock", trigger);
+      return;
+    }
     lastDetailTriggerId = id;
     const snapshot = listSnapshot();
     listScrollPosition = snapshot.scrollTop;
@@ -1572,9 +1953,17 @@
 
   function handleHistoryNavigation(event) {
     if (state.diagramModal) closeDiagram({ restoreFocus: false });
+    if (state.privacyDialog) closePrivacyDialog({ restoreFocus: false });
     const id = safeHashId();
     const card = atlas.cards.find((item) => item.id === id);
     if (card) {
+      if (card.locked && !card.detailsAvailable) {
+        state.selectedId = card.id;
+        state.detailOpen = false;
+        renderDynamic();
+        openPrivacyDialog(card.id, "unlock", null);
+        return;
+      }
       state.selectedId = card.id;
       state.detailOpen = true;
       renderDynamic();
@@ -1681,6 +2070,19 @@
       input.focus();
     } else if (actionButton.dataset.action === "cycle-appearance") {
       cycleAppearance();
+    } else if (actionButton.dataset.action === "open-privacy") {
+      openPrivacyDialog(
+        actionButton.dataset.cardId,
+        actionButton.dataset.privacyIntent,
+        actionButton,
+      );
+    } else if (actionButton.dataset.action === "close-privacy") {
+      closePrivacyDialog();
+    } else if (actionButton.dataset.action === "end-privacy-session") {
+      actionButton.disabled = true;
+      void logoutPrivacySession().finally(() => {
+        actionButton.disabled = false;
+      });
     } else if (actionButton.dataset.action === "go-home") {
       goHome();
     } else if (actionButton.dataset.action === "close-detail") {
@@ -1763,6 +2165,14 @@
       target instanceof HTMLTextAreaElement ||
       target instanceof HTMLSelectElement;
 
+    if (state.privacyDialog) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closePrivacyDialog();
+      }
+      return;
+    }
+
     if (state.diagramModal) {
       const arrowDelta = {
         ArrowLeft: { x: 64, y: 0 },
@@ -1837,7 +2247,7 @@
     const hashCard = atlas.cards.find((card) => card.id === hashId);
     const hasValidHash = Boolean(hashCard);
     state.selectedId = hasValidHash ? hashId : null;
-    state.detailOpen = hasValidHash;
+    state.detailOpen = Boolean(hasValidHash && hashCard.detailsAvailable !== false);
 
     applyAppearance(state.appearance, { persist: false });
     applyPalette(state.palette, { persist: false });
@@ -1854,6 +2264,7 @@
     });
 
     root.addEventListener("click", handleRootClick);
+    root.addEventListener("submit", handlePrivacySubmit);
     root.addEventListener("pointerdown", handleDiagramPointerDown);
     root.addEventListener("pointermove", handleDiagramPointerMove);
     root.addEventListener("pointerup", handleDiagramPointerEnd);
@@ -1867,6 +2278,14 @@
     });
     diagramDialog.addEventListener("click", (event) => {
       if (event.target === diagramDialog) closeDiagram();
+    });
+    const privacyDialog = root.querySelector(".privacy-dialog");
+    privacyDialog?.addEventListener("cancel", (event) => {
+      event.preventDefault();
+      closePrivacyDialog();
+    });
+    privacyDialog?.addEventListener("click", (event) => {
+      if (event.target === privacyDialog) closePrivacyDialog();
     });
     document.addEventListener("keydown", handleKeyboard);
     window.addEventListener("popstate", handleHistoryNavigation);
@@ -1899,6 +2318,9 @@
       );
     }
     renderDynamic();
+    if (hasValidHash && hashCard.detailsAvailable === false) {
+      openPrivacyDialog(hashCard.id, "unlock", null);
+    }
   }
 
   initialize();

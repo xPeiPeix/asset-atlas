@@ -2,6 +2,7 @@ node_modules/
 dist/
 .vercel/
 asset-atlas.html
+.asset-atlas/
 .DS_Store
 .env
 .env.*

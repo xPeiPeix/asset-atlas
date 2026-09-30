@@ -48,6 +48,11 @@
   --failed: #c23b3b;
   --pending: #8d867c;
   --archived: #6f6a63;
+  --private: #7a4434;
+  --private-strong: #5f3025;
+  --private-soft: rgba(122, 68, 52, 0.1);
+  --private-line: rgba(122, 68, 52, 0.34);
+  --private-veil: rgba(255, 254, 250, 0.76);
   --bar-bg: rgba(246, 244, 239, 0.86);
   --scrim: rgba(28, 25, 23, 0.4);
 }
@@ -75,6 +80,11 @@
   --failed: #e06c6c;
   --pending: #7e786e;
   --archived: #6f6a63;
+  --private: #d2a071;
+  --private-strong: #e6b784;
+  --private-soft: rgba(210, 160, 113, 0.12);
+  --private-line: rgba(210, 160, 113, 0.38);
+  --private-veil: rgba(29, 27, 25, 0.76);
   --bar-bg: rgba(21, 19, 18, 0.82);
   --scrim: rgba(0, 0, 0, 0.55);
 }
@@ -102,6 +112,11 @@
   --failed: #b93a3a;
   --pending: #848b96;
   --archived: #6b7280;
+  --private: #526584;
+  --private-strong: #394d70;
+  --private-soft: rgba(82, 101, 132, 0.1);
+  --private-line: rgba(82, 101, 132, 0.34);
+  --private-veil: rgba(253, 253, 254, 0.78);
   --bar-bg: rgba(243, 244, 246, 0.86);
   --scrim: rgba(24, 27, 32, 0.4);
 }
@@ -129,6 +144,11 @@
   --failed: #e06c6c;
   --pending: #757d8a;
   --archived: #6b7280;
+  --private: #9bafd1;
+  --private-strong: #b4c5e2;
+  --private-soft: rgba(155, 175, 209, 0.12);
+  --private-line: rgba(155, 175, 209, 0.38);
+  --private-veil: rgba(25, 28, 34, 0.78);
   --bar-bg: rgba(17, 19, 24, 0.82);
   --scrim: rgba(0, 0, 0, 0.55);
 }
@@ -500,6 +520,56 @@ svg {
   background: linear-gradient(135deg, #b45309 50%, #e2a23f 50%);
 }
 
+.privacy-session-control {
+  flex: 0 0 auto;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid var(--private-line);
+  border-radius: var(--radius-control);
+  background: var(--private-soft);
+  color: var(--private-strong);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.privacy-session-control[hidden] {
+  display: none;
+}
+
+.privacy-session-control:hover {
+  border-color: var(--private);
+}
+
+.privacy-session-control svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.privacy-session-notice {
+  max-width: 1160px;
+  margin: 12px auto 0;
+  padding: 12px 20px;
+  color: var(--private-strong);
+  background: var(--private-soft);
+  font-size: 12px;
+}
+
+.privacy-session-notice button {
+  margin-left: 10px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-decoration: underline;
+}
+
 .palette-swatch-slate {
   background: linear-gradient(135deg, #2563eb 50%, #5f9bf8 50%);
 }
@@ -781,6 +851,52 @@ svg {
     var(--shadow-card-hover);
 }
 
+.asset-card-frame.is-private .asset-card {
+  padding-bottom: 38px;
+  border-color: var(--private-line);
+  background-color: var(--bg-raised);
+  background-image:
+    linear-gradient(var(--private-veil), var(--private-veil)),
+    repeating-linear-gradient(
+      135deg,
+      transparent 0,
+      transparent 8px,
+      var(--private-soft) 8px,
+      var(--private-soft) 9px
+    );
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--private) 7%, transparent),
+    var(--shadow-card);
+}
+
+.asset-card-frame.is-private .asset-card::before,
+.asset-card-frame.is-private .asset-card::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.asset-card-frame.is-private .asset-card::before {
+  inset: 7px;
+  border: 1px solid color-mix(in srgb, var(--private) 20%, transparent);
+  border-radius: 9px;
+}
+
+.asset-card-frame.is-private .asset-card::after {
+  top: 0;
+  left: 24%;
+  right: 24%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--private), transparent);
+}
+
+.asset-card-frame.is-private .asset-card:hover {
+  border-color: var(--private);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--private) 11%, transparent),
+    var(--shadow-card-hover);
+}
+
 .asset-card-top {
   width: 100%;
   display: flex;
@@ -808,6 +924,17 @@ svg {
   position: relative;
   display: inline-flex;
   margin: 2px 0 10px;
+}
+
+.asset-card-frame.is-private:not(.is-authorized) .asset-avatar-image {
+  filter: saturate(0.62) contrast(0.95);
+  opacity: 0.82;
+}
+
+.asset-card-frame.is-private:not(.is-authorized) .asset-card-name,
+.asset-card-frame.is-private:not(.is-authorized) .asset-card-meta {
+  filter: blur(4px);
+  user-select: none;
 }
 
 .asset-card-name {
@@ -849,6 +976,83 @@ svg {
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.asset-card-lock-rail {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 27px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid var(--private-line);
+  background: var(--private-soft);
+  color: var(--private-strong);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+}
+
+.asset-privacy-action {
+  position: absolute;
+  z-index: 3;
+  top: 8px;
+  right: 8px;
+  max-width: 27px;
+  height: 27px;
+  padding: 0 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--bg-raised);
+  color: var(--ink-3);
+  opacity: 0;
+  white-space: nowrap;
+  box-shadow: 0 3px 12px color-mix(in srgb, var(--ink) 7%, transparent);
+  transition:
+    max-width var(--duration) var(--ease),
+    opacity var(--duration) var(--ease),
+    border-color var(--duration) var(--ease),
+    color var(--duration) var(--ease);
+}
+
+.asset-card-frame:hover .asset-privacy-action,
+.asset-privacy-action:focus-visible {
+  max-width: 104px;
+  opacity: 1;
+  border-color: var(--line);
+}
+
+.asset-card-frame.is-private .asset-privacy-action {
+  color: var(--private-strong);
+  border-color: var(--private-line);
+}
+
+.asset-privacy-action:hover {
+  color: var(--private-strong);
+  border-color: var(--private);
+}
+
+.asset-privacy-action svg {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.asset-privacy-action span:last-child {
+  font-size: 10px;
+  font-weight: 650;
 }
 
 /* ---------- seal avatar ---------- */
@@ -1013,6 +1217,54 @@ svg {
   stroke-linejoin: round;
 }
 
+.detail-privacy-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-privacy-button,
+.detail-end-session {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 11px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--line);
+  background: var(--bg-raised);
+  color: var(--ink-2);
+  font-size: 12.5px;
+}
+
+.detail-privacy-button:hover,
+.detail-end-session:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+.detail-privacy-button.is-private {
+  border-color: var(--private-line);
+  background: var(--private-soft);
+  color: var(--private-strong);
+}
+
+.detail-privacy-button svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.detail-end-session {
+  border-color: transparent;
+  background: none;
+  color: var(--ink-3);
+}
+
 .detail-header {
   display: flex;
   gap: 22px;
@@ -1065,6 +1317,22 @@ svg {
   background: var(--bg-raised);
   color: var(--ink-2);
   font-size: 12px;
+}
+
+.detail-private-chip {
+  border-color: var(--private-line);
+  background: var(--private-soft);
+  color: var(--private-strong);
+}
+
+.detail-private-chip svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 button.detail-chip {
@@ -1488,6 +1756,325 @@ button.detail-chip:hover {
   stroke-linejoin: round;
 }
 
+/* ---------- private asset dialog ---------- */
+
+.privacy-dialog {
+  width: min(calc(100% - 28px), 440px);
+  max-width: none;
+  max-height: calc(100dvh - 28px);
+  padding: 0;
+  border: 1px solid var(--private-line);
+  border-radius: 18px;
+  background: var(--bg-raised);
+  color: var(--ink);
+  box-shadow: var(--shadow-pop);
+  overflow: auto;
+}
+
+.privacy-dialog::backdrop {
+  background: color-mix(in srgb, var(--scrim) 90%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.privacy-dialog-shell {
+  position: relative;
+  margin: 0;
+  padding: 30px 32px 26px;
+  text-align: center;
+  background-image:
+    radial-gradient(
+      circle at 50% 0,
+      var(--private-soft),
+      transparent 42%
+    ),
+    repeating-linear-gradient(
+      135deg,
+      transparent 0,
+      transparent 14px,
+      color-mix(in srgb, var(--private) 4%, transparent) 14px,
+      color-mix(in srgb, var(--private) 4%, transparent) 15px
+    );
+}
+
+.privacy-dialog-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-3);
+}
+
+.privacy-dialog-close:hover {
+  background: var(--bg-sunken);
+  color: var(--ink);
+}
+
+.privacy-dialog-close svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.privacy-seal-stage {
+  position: relative;
+  width: 108px;
+  height: 108px;
+  margin: 2px auto 18px;
+  display: grid;
+  place-items: center;
+}
+
+.privacy-asset-avatar {
+  width: 82px;
+  height: 82px;
+  z-index: 1;
+}
+
+.privacy-seal-orbit {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--private-line);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 0 6px color-mix(in srgb, var(--private) 4%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--private) 7%, transparent);
+}
+
+.privacy-seal-orbit::before,
+.privacy-seal-orbit::after {
+  content: "";
+  position: absolute;
+  background: var(--bg-raised);
+}
+
+.privacy-seal-orbit::before {
+  top: 50%;
+  left: -4px;
+  right: -4px;
+  height: 7px;
+  transform: translateY(-50%);
+}
+
+.privacy-seal-orbit::after {
+  top: -4px;
+  bottom: -4px;
+  left: 50%;
+  width: 7px;
+  transform: translateX(-50%);
+}
+
+.privacy-seal-key {
+  position: absolute;
+  z-index: 2;
+  right: -2px;
+  bottom: 8px;
+  width: 31px;
+  height: 31px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--private-line);
+  border-radius: 50%;
+  background: var(--bg-raised);
+  color: var(--private-strong);
+  box-shadow: 0 5px 14px color-mix(in srgb, var(--private) 16%, transparent);
+}
+
+.privacy-seal-key svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.privacy-eyebrow {
+  margin: 0 0 7px;
+  color: var(--private-strong);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.privacy-dialog h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.privacy-asset-name {
+  margin: 7px 0 0;
+  color: var(--ink-2);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.privacy-description {
+  margin: 14px auto 21px;
+  max-width: 35ch;
+  color: var(--ink-3);
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+
+.privacy-password-label {
+  display: block;
+  margin: 0 0 7px;
+  color: var(--ink-2);
+  font-size: 11.5px;
+  font-weight: 650;
+  text-align: left;
+}
+
+.privacy-password-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.privacy-password-field > span {
+  position: absolute;
+  left: 12px;
+  color: var(--private);
+  pointer-events: none;
+}
+
+.privacy-password-field svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.privacy-password-field input {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px 0 38px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  outline: none;
+  background: var(--bg-sunken);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  transition:
+    border-color var(--duration) var(--ease),
+    box-shadow var(--duration) var(--ease),
+    background var(--duration) var(--ease);
+}
+
+.privacy-password-field input:focus {
+  border-color: var(--private);
+  background: var(--bg-raised);
+  box-shadow: 0 0 0 4px var(--private-soft);
+}
+
+.privacy-session-note {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--private-line);
+  border-radius: var(--radius-control);
+  background: var(--private-soft);
+  color: var(--private-strong);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.privacy-session-note svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.privacy-message {
+  min-height: 19px;
+  margin: 8px 0 3px;
+  color: var(--ink-3);
+  font-size: 11.5px;
+}
+
+.privacy-message.has-error {
+  color: var(--failed);
+}
+
+.privacy-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.privacy-actions button {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: var(--radius-control);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.privacy-actions button:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.privacy-primary {
+  border: 1px solid var(--private-strong);
+  background: var(--private-strong);
+  color: var(--bg-raised);
+}
+
+.privacy-primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.privacy-secondary {
+  border: 1px solid var(--private-line);
+  background: var(--private-soft);
+  color: var(--private-strong);
+}
+
+.privacy-cancel {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-3);
+  font-weight: 500 !important;
+}
+
+.privacy-cancel:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--bg-sunken);
+}
+
+.privacy-footnote {
+  margin: 17px 0 0;
+  color: var(--ink-3);
+  font-size: 10.5px;
+  line-height: 1.55;
+}
+
 /* full-screen diagram dialog */
 
 .diagram-dialog {
@@ -1661,6 +2248,16 @@ button.detail-chip:hover {
     padding: 0 8px;
   }
 
+  .privacy-session-control {
+    width: 32px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .privacy-session-control span:last-child {
+    display: none;
+  }
+
   .palette-choice span:last-child {
     display: none;
   }
@@ -1696,6 +2293,10 @@ button.detail-chip:hover {
     gap: 10px;
   }
 
+  .asset-privacy-action {
+    display: none;
+  }
+
   .asset-avatar {
     width: 64px;
     height: 64px;
@@ -1713,6 +2314,10 @@ button.detail-chip:hover {
   .detail-topbar {
     align-items: flex-start;
     flex-wrap: wrap;
+  }
+
+  .detail-privacy-actions {
+    margin-left: auto;
   }
 
   .detail-title-row h2 {
@@ -1745,6 +2350,25 @@ button.detail-chip:hover {
 @media (max-width: 420px) {
   .brand-copy {
     display: none;
+  }
+
+  .privacy-dialog-shell {
+    padding: 26px 20px 22px;
+  }
+
+  .privacy-seal-stage {
+    width: 96px;
+    height: 96px;
+  }
+
+  .privacy-asset-avatar {
+    width: 72px;
+    height: 72px;
+  }
+
+  .detail-privacy-actions {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 

@@ -9,8 +9,10 @@
   },
   "scripts": {
     "build": "node scripts/build-asset-atlas.mjs",
-    "check": "node --check web/app.js && node --check scripts/serve-asset-atlas.mjs && node scripts/test-build-asset-atlas.mjs && node scripts/test-diagram-viewport.mjs && npm run build && node scripts/test-app.mjs",
-    "serve": "npm run build && node scripts/serve-asset-atlas.mjs"
+    "build:private": "node scripts/build-asset-atlas.mjs --private",
+    "check": "node --check web/app.js && node --check scripts/serve-asset-atlas.mjs && node scripts/test-build-asset-atlas.mjs && node scripts/test-private-build.mjs && node scripts/test-diagram-viewport.mjs && node scripts/test-asset-lock-backend.mjs && npm run build && node scripts/test-app.mjs && node scripts/test-app-privacy.mjs",
+    "serve": "npm run build && node scripts/serve-asset-atlas.mjs",
+    "serve:private": "npm run build:private && node scripts/serve-asset-atlas.mjs --private"
   },
   "dependencies": {
     "mermaid": "11.16.1",

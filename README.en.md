@@ -2,7 +2,7 @@
 
 [中文](README.md)｜English
 
-AI makes building tools easier than ever, but finished projects end up scattered everywhere. Asset Atlas brings them into one collection: what each project does, where its code lives, how to run it, and where it is deployed. Browse locally or host your collection privately.
+AI makes building tools easier than ever, but finished projects end up scattered everywhere. Asset Atlas brings them into one collection: what each project does, where its code lives, how to run it, and where it is deployed. Browse locally, host privately, or [password-protect individual cards](docs/usage.md#卡片密码保护-node-模式) with the Node server.
 
 [Live demo](https://asset-atlas-nu.vercel.app) · [Create my first card](#create-my-first-card) · [User guide](docs/usage.md)
 
